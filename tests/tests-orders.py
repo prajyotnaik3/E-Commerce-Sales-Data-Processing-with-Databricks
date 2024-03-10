@@ -10,22 +10,7 @@ from pyspark.sql.types import StructField, StringType, DoubleType, StructType, I
 # COMMAND ----------
 
 class TestReadJsonFile(unittest.TestCase):
-    schema = StructType([
-        StructField("Row ID", IntegerType(), False),
-        StructField("Order ID", StringType(), True),
-        StructField("Order Date", StringType(), True),
-        StructField("Ship Date", StringType(), True),
-        StructField("Ship Mode", StringType(), True),
-        StructField("Customer ID", StringType(), True),
-        StructField("Product ID", StringType(), True),
-        StructField("Quantity", IntegerType(), True),
-        StructField("Price", DoubleType(), True),
-        StructField("Discount", DoubleType(), True),
-        StructField("Profit", DoubleType(), True)
-    ])
-    cols_mapping = {"Row ID": "rowID", "Order ID": "orderID", "Order Date": "orderDate", "Ship Date": "shipDate", "Ship Mode": "shipMode", "Customer ID": "customerID", "Product ID": "productID", "Quantity": "quantity", "Price": "price", "Discount": "discount", "Profit": "profit"}
-    cast_dates = ["orderDate", "shipDate"]
-
+    
     def test_nonexistent_file(self):
         file_path = "/data/Order.json"
         with self.assertRaises(AnalysisException):
@@ -72,6 +57,9 @@ class TestReadJsonFile(unittest.TestCase):
         self.assertEqual(df.exceptAll(df2).rdd.isEmpty(), True)
         self.assertEqual(df2.exceptAll(df).rdd.isEmpty(), True)
         
+        with self.assertRaises(AnalysisException):
+            df3 = create_products_enriched_df("ecommerce_sales_test.orders_raw_temp")
+        
         df3 = create_orders_enriched_df("ecommerce_sales_test.products_raw", "ecommerce_sales_test.customers_raw", table_raw)
 
         self.assertTrue(df3)
@@ -99,7 +87,10 @@ class TestReadJsonFile(unittest.TestCase):
         self.assertEqual(df3.dtypes, df4.dtypes)
         self.assertEqual(df3.exceptAll(df4).rdd.isEmpty(), True)
         self.assertEqual(df4.exceptAll(df3).rdd.isEmpty(), True)
-
+        
+        with self.assertRaises(AnalysisException):
+            df5 = create_products_enriched_df("ecommerce_sales_test.orders_enriched_temp")
+        
         df5 = create_orders_aggregated_df(table_enriched)
         
         self.assertTrue(df5)
@@ -111,6 +102,8 @@ class TestReadJsonFile(unittest.TestCase):
         self.assertEqual(df5.filter(df5["category"].isNull()).count(), 192)
         self.assertEqual(df5.filter(df5["subCategory"].isNull()).count(), 192)
         self.assertEqual(df5.filter(df5["year"].isNull()).count(), 0)
+
+        self.assertTrue(set(df5.select(col("year")).distinct().toPandas().year).difference({2014, 2015, 2016, 2017}) == set())
 
         create_delta_table(table_aggregated, df5)
         df6 = spark.table(table_aggregated)

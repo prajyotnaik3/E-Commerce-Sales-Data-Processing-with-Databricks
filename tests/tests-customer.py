@@ -1,6 +1,7 @@
 # Databricks notebook source
 import unittest
 from py4j.protocol import Py4JJavaError
+from pyspark.errors.exceptions.captured import AnalysisException
 from pyspark.sql.types import StructField, StringType, DoubleType, StructType
 
 # COMMAND ----------
@@ -45,7 +46,10 @@ class TestCustomerIngestion(unittest.TestCase):
         self.assertEqual(df.dtypes, df2.dtypes)
         self.assertEqual(df2.exceptAll(df).rdd.isEmpty(), True)
         self.assertEqual(df.exceptAll(df2).rdd.isEmpty(), True)
-    
+        
+        with self.assertRaises(AnalysisException):
+            df3 = create_products_enriched_df("ecommerce_sales_test.customers_raw_temp")
+
         df3 = create_customers_enriched_df(table_raw)
 
         self.assertTrue(df3)

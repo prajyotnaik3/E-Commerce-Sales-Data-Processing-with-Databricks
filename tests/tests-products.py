@@ -43,11 +43,15 @@ class TestProductsIngestion(unittest.TestCase):
         self.assertEqual(df.filter(df["pricePerProduct"].isNull()).count(), 0)
 
         create_delta_table(table_raw, df)
+
         df2 = spark.table(table_raw)
 
         self.assertEqual(df.dtypes, df2.dtypes)
         self.assertEqual(df.exceptAll(df2).rdd.isEmpty(), True)
         self.assertEqual(df2.exceptAll(df).rdd.isEmpty(), True)
+
+        with self.assertRaises(AnalysisException):
+            df3 = create_products_enriched_df("ecommerce_sales_test.products_raw_temp")
 
         df3 = create_products_enriched_df(table_raw)
 
