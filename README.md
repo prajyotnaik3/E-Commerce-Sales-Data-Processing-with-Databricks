@@ -181,6 +181,6 @@ tests directory contains test cases written testing ingestion and processing of 
    * Year value is extracted from date as expected
 
 #### requirements.txt
-Ost of the requirements were available by default on the Databricks. Following maven library had to be installed to read xlsx files:
+Most of the requirements were available by default on the Databricks. Following maven library had to be installed to read xlsx files:
 com.crealytics:spark-excel_2.12:3.5.0_0.20.3
 
